@@ -1,0 +1,2 @@
+telepot==8.3
+selenium==2.53.1 

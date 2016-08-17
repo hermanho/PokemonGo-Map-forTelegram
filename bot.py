@@ -13,7 +13,7 @@ from selenium import webdriver
 
 """
 Run with
-python3.5 bot.py <TELEGRAM TOKEN> <PTC Username> <PTC Password> <Steps> <Host> <Port> <GMaps Key>
+python3 bot.py <TELEGRAM TOKEN>
 
 """
 
@@ -41,28 +41,27 @@ class PokeMap(telepot.aio.helper.ChatHandler):
         # save the location into a variable
         locTemp = msg['text'].split(' ', 1)
         location = locTemp[1]
+        webhost = '127.0.0.1'
+        webport = '5101'
         # run the shell command
         run_map = [
-                'python2.7', 'PokemonGo-Map-3.1.0/runserver.py',
-                '-a', 'ptc',
-                '-u', run_args['user'],
-                '-p', run_args['pass'],
+                'python2', 'PokemonGo-Map/runserver.py',
                 '-l', "%s" % location,
                 '-st', run_args['step'],
-                '-H', run_args['host'],
-                '-P', run_args['port']
+                '-H', webhost,
+                '-P', webport
         ]
         with open('mapstd.txt', 'w') as mapstd:
             with open('maperr.txt', 'w') as maperr:
                 process = subprocess.Popen(run_map, stdout=mapstd, stderr=maperr, preexec_fn=os.setsid)
         # let the map load
-        await self.sender.sendMessage('Wait...')
+        await self.sender.sendMessage('Wait... ' + load_time +  'sec')
         await asyncio.sleep(load_time)
         # initialize the page
         try:
-            driver = webdriver.PhantomJS()
+            driver = webdriver.PhantomJS('node_modules/phantomjs-prebuilt/lib/phantom/bin/phantomjs')
             driver.set_window_size(512, 512)
-            driver.get('http://%s:%s' % (run_args['host'], run_args['port']))
+            driver.get('http://%s:%s' % (webhost, webport))
             # let the page load
             await asyncio.sleep(6)
             # save a screenshot
@@ -139,17 +138,12 @@ TOKEN = sys.argv[1]  # get token from command-line
 # global variables
 server_used = False
 run_args = {
-        'user' : sys.argv[2],
-        'pass' : sys.argv[3],
-        'step' : sys.argv[4],
-        'host' : sys.argv[5],
-        'port' : sys.argv[6],
-        'gkey' : sys.argv[7]
+        'step' : sys.argv[2],
 }
 users = {}
 whitelist = []  # add here your telegram id
-wait_time = 600
-load_time = 120
+wait_time = 30
+load_time = 30
 
 bot = telepot.aio.DelegatorBot(TOKEN, [
     (per_chat_id(), create_open(PokeMap, timeout=3600)),

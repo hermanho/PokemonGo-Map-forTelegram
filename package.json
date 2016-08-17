@@ -1,0 +1,23 @@
+{
+  "name": "pokemongomapfortelegram",
+  "version": "0.1.0",
+  "description": "PokemonGo-Map-forTelegram",
+  "dependencies": {
+    "phantomjs-prebuilt":"^2.1.12"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hermanho/PokemonGo-Map-forTelegram.git"
+  },
+  "keywords": [
+    "Pokemon",
+    "Go"
+  ],
+  "author": "Herman Ho",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hermanho/PokemonGo-Map-forTelegram/issues"
+  },
+  "homepage": "https://github.com/hermanho/PokemonGo-Map-forTelegram"
+}
