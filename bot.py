@@ -1,4 +1,5 @@
 import sys
+import logging
 import asyncio
 import telepot
 import telepot.aio
@@ -10,6 +11,7 @@ import signal
 
 from telepot.aio.delegate import per_chat_id, create_open
 from selenium import webdriver
+from seleniumrequests import PhantomJS
 
 """
 Run with
@@ -23,15 +25,15 @@ class PokeMap(telepot.aio.helper.ChatHandler):
         super(PokeMap, self).__init__(seed_tuple, timeout)
 
     def print_info(self, msg):
-        # print info
-        print('Sender: ', msg['from'])
-        print('Command: ', msg['text'])
-        print('Actual time: ', time.time())
-        print('Msg time: ', msg['date'])
-        print('Latest use: ', users[msg['from']['id']])
+        # log.info info
+        log.info('Sender: {}'.format(msg['from']))
+        log.info('Command: {}'.format(msg['text']))
+        log.info('Actual time: {}'.format(time.time()))
+        log.info('Msg time: {}'.format(msg['date']))
+        log.info('Latest use: {}'.format(users[msg['from']['id']]))
 
     async def run_server(self, msg, run_args):
-        print('Result: run_server')
+        log.info('Result: run_server')
         # declare global variables
         global server_used
         # set the server as occupied
@@ -51,25 +53,31 @@ class PokeMap(telepot.aio.helper.ChatHandler):
                 '-H', webhost,
                 '-P', webport
         ]
+        lat = location.split(',')[0];
+        lon = location.split(',')[1];
+        log.info('run_map: {}'.format(run_map))
         with open('mapstd.txt', 'w') as mapstd:
             with open('maperr.txt', 'w') as maperr:
                 process = subprocess.Popen(run_map, stdout=mapstd, stderr=maperr, preexec_fn=os.setsid)
         # let the map load
-        await self.sender.sendMessage('Processing, please wait... {}sec'.format(load_time))
+        await self.sender.sendMessage('Processing {}, please wait... {}sec'.format(location, load_time))
         await asyncio.sleep(load_time)
         # initialize the page
         try:
             driver = webdriver.PhantomJS('node_modules/phantomjs-prebuilt/lib/phantom/bin/phantomjs')
+            driver2 = webdriver2(driver)
             driver.set_window_size(512, 512)
             driver.get('http://%s:%s' % (webhost, webport))
             # let the page load
+            await asyncio.sleep(6)
+            driver2.request('POST', ('http://%s:%s?next_loc?lat=%s&lon=%s' % (webhost, webport, lat, lon)))
             await asyncio.sleep(6)
             # save a screenshot
             driver.save_screenshot('loc.png')
             # terminate the map
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
         except:
-            print('WebDriverException')
+            log.error('WebDriverException')
             await self.sender.sendMessage('Something went wrong, try again! :c')
         else:
             # send the screenshot
@@ -79,7 +87,7 @@ class PokeMap(telepot.aio.helper.ChatHandler):
         server_used = False
 
     async def wait_server(self, msg):
-        print('Result: wait_server')
+        log.info('Result: wait_server')
         await self.sender.sendMessage('Wait until i\'m avaiable')
         # wait until the server is free
         while(server_used is True):
@@ -87,7 +95,7 @@ class PokeMap(telepot.aio.helper.ChatHandler):
         await self.sender.sendMessage('I\'m now avaiable!')
 
     async def wait_countdown(self, msg):
-        print('Result: wait_server')
+        log.info('Result: wait_server')
         countdown = round(users[msg['from']['id']] + wait_time - time.time())
         await self.sender.sendMessage('Wait %s seconds until you can use me again' % str(countdown))
         while (countdown > 0):
@@ -133,6 +141,11 @@ class PokeMap(telepot.aio.helper.ChatHandler):
         pass
 
 
+logging.basicConfig(format='%(asctime)s [%(threadName)16s][%(module)14s][%(levelname)8s] %(message)s')
+log = logging.getLogger()
+log.setLevel(logging.DEBUG)
+#log.setLevel(logging.INFO)
+
 TOKEN = sys.argv[1]  # get token from command-line
 
 # global variables
@@ -151,6 +164,6 @@ bot = telepot.aio.DelegatorBot(TOKEN, [
 
 loop = asyncio.get_event_loop()
 loop.create_task(bot.message_loop())
-print('Listening ...')
+log.info('Listening ...')
 
 loop.run_forever()
